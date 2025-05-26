@@ -25,6 +25,7 @@ The smart contract system utilizes a commit-reveal pattern to prevent frontrunni
 3. Both players commit hashed moves
 4. Both players reveal moves
 5. Winner is determined for current turn
+<!-- @ ? - 3 or 5, or from 3 to 5 -->
 6. Repeat 3-5 until all turns complete
 7. Final winner receives prize and winner token
 
