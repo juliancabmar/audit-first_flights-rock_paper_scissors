@@ -7,6 +7,9 @@
 ## Audit Scope
 
 ## Project Stats
+Checked | Code | Files
+    -   | 14   | [](../src/WinningToken.sol)
+    -   | 335  | [](../src/RockPaperScissors.sol)
 
 ## Compatibilities
 - Solc versions: ^0.8.13
@@ -47,6 +50,7 @@ Player can create a game for ETH or winner tokens
 Join timeout: 24 hours by default
 Reveal timeout: Set when creating game
 Reveal timeout: min 5 minutes
+b = 2t - 1
 
 
 
@@ -88,5 +92,18 @@ Reveal timeout: min 5 minutes
 5. search restrictions
 6. search invariants
 7. automated analisis
+8. get stats
+9. manual analisis A-B
+10. manual analisis processes
+    deploy contracts (contract owner)
+        RockPaperScissors::constructor
+        WinningToken::constructor
+    set new admin (contract owner)
+        RockPaperScissors::setAdmin
+    withdraw accumulated fees (admin)
+        RockPaperScissors::withdrawFees
+    updating time outs params (admin)
+        RockPaperScissors::setJoinTimeout
+    
 
     

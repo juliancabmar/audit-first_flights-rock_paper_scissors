@@ -858,6 +858,7 @@ contract RockPaperScissorsTest is Test {
     }
 
     // Test contract ownership functions
+    // @audit-info C - can be restricted to view
     function testOwnershipFunctions() public {
         // Check contract owner
         assertEq(game.owner(), address(this));

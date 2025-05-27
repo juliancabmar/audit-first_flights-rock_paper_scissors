@@ -95,8 +95,11 @@ contract RockPaperScissors {
      */
     function createGameWithEth(uint256 _totalTurns, uint256 _timeoutInterval) external payable returns (uint256) {
         require(msg.value >= minBet, "Bet amount too small");
+        // @? - what happen if total-turns is 1
         require(_totalTurns > 0, "Must have at least one turn");
         require(_totalTurns % 2 == 1, "Total turns must be odd");
+        // @?A - change literal by constant
+        // @? what happen if the reveal _timeoutInterval is >= joinTimeout
         require(_timeoutInterval >= 5 minutes, "Timeout must be at least 5 minutes");
 
         uint256 gameId = gameCounter++;
@@ -112,7 +115,7 @@ contract RockPaperScissors {
         game.state = GameState.Created;
 
         emit GameCreated(gameId, msg.sender, msg.value, _totalTurns);
-
+        // @? somoebody can cancel the game only with the gameId
         return gameId;
     }
 
@@ -121,6 +124,7 @@ contract RockPaperScissors {
      * @param _totalTurns Number of turns for the game (must be odd)
      * @param _timeoutInterval Seconds allowed for reveal phase
      */
+    // @? - How difference the Eth and Token games based
     function createGameWithToken(uint256 _totalTurns, uint256 _timeoutInterval) external returns (uint256) {
         require(winningToken.balanceOf(msg.sender) >= 1, "Must have winning token");
         require(_totalTurns > 0, "Must have at least one turn");
@@ -128,6 +132,8 @@ contract RockPaperScissors {
         require(_timeoutInterval >= 5 minutes, "Timeout must be at least 5 minutes");
 
         // Transfer token to contract
+        // @?S - ignore return value
+        // @? - allow is not needed
         winningToken.transferFrom(msg.sender, address(this), 1);
 
         uint256 gameId = gameCounter++;
@@ -151,6 +157,8 @@ contract RockPaperScissors {
      * @notice Join an existing game with ETH bet
      * @param _gameId ID of the game to join
      */
+    // @? - what happen if pass a open token gameId here
+    // @? - reentrancy here with other game prize 
     function joinGameWithEth(uint256 _gameId) external payable {
         Game storage game = games[_gameId];
 
@@ -177,6 +185,8 @@ contract RockPaperScissors {
         require(winningToken.balanceOf(msg.sender) >= 1, "Must have winning token");
 
         // Transfer token to contract
+        // @?S - ignore return value
+        // @? - not allow first
         winningToken.transferFrom(msg.sender, address(this), 1);
 
         game.playerB = msg.sender;
@@ -188,7 +198,7 @@ contract RockPaperScissors {
      * @param _gameId ID of the game
      * @param _commitHash Hashed move with salt
      */
-    function commitMove(uint256 _gameId, bytes32 _commitHash) external {
+    function commitMove(uint256 _gameId, bytes32 _commitHash) external { //@<
         Game storage game = games[_gameId];
 
         require(msg.sender == game.playerA || msg.sender == game.playerB, "Not a player in this game");
@@ -342,6 +352,7 @@ contract RockPaperScissors {
      * @notice Set the join timeout period (admin function)
      * @param _newTimeout New timeout value in seconds
      */
+    // @? - this may be callable only for the Admin
     function setJoinTimeout(uint256 _newTimeout) external {
         require(msg.sender == owner(), "Only owner can set timeout");
         require(_newTimeout >= 1 hours, "Timeout must be at least 1 hour");
@@ -367,6 +378,7 @@ contract RockPaperScissors {
      * @notice Get the contract owner (the deployer)
      * @return The owner address
      */
+    // @audit - the may be another owner than the deployer
     function owner() public view returns (address) {
         return adminAddress;
     }
@@ -375,6 +387,7 @@ contract RockPaperScissors {
      * @notice Get the owner of the token contract
      * @return The token owner address
      */
+    // @?A - make external
     function tokenOwner() public view returns (address) {
         return winningToken.owner();
     }
@@ -383,10 +396,11 @@ contract RockPaperScissors {
      * @notice Set a new admin address (only callable by current admin)
      * @param _newAdmin The new admin address
      */
+    // @audit - by the docs only callable by contract Owner
     function setAdmin(address _newAdmin) external {
         require(msg.sender == adminAddress, "Only admin can set new admin");
         require(_newAdmin != address(0), "Admin cannot be zero address");
-
+        // @?A - missing event for this
         adminAddress = _newAdmin;
     }
 

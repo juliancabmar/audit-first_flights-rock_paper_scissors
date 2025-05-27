@@ -30,7 +30,7 @@
 
 ## Automated analisis
     compiler warning/errors (forge build)
-    slitter (slither --include-paths "./src" .)
+    slitter (slither --checklist --show-ignored-findings --include-paths src/ . 1> slither-report.md)
     aderyn (aderyn)
 
 ## Increase Kwnoledge
