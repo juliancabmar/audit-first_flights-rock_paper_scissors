@@ -125,6 +125,7 @@ contract RockPaperScissors {
      * @param _timeoutInterval Seconds allowed for reveal phase
      */
     // @? - How difference the Eth and Token games based
+    // @? - this can be called by a msg.sender address = 0x0
     function createGameWithToken(uint256 _totalTurns, uint256 _timeoutInterval) external returns (uint256) {
         require(winningToken.balanceOf(msg.sender) >= 1, "Must have winning token");
         require(_totalTurns > 0, "Must have at least one turn");
@@ -158,7 +159,8 @@ contract RockPaperScissors {
      * @param _gameId ID of the game to join
      */
     // @? - what happen if pass a open token gameId here
-    // @? - reentrancy here with other game prize 
+    // @? - this can be called by a msg.sender address = 0x0
+    // @? - reentrancy here with other game prize
     function joinGameWithEth(uint256 _gameId) external payable {
         Game storage game = games[_gameId];
 
@@ -175,6 +177,7 @@ contract RockPaperScissors {
      * @notice Join an existing game with token
      * @param _gameId ID of the game to join
      */
+    // @? - this can be called by a msg.sender address = 0x0
     function joinGameWithToken(uint256 _gameId) external {
         Game storage game = games[_gameId];
 
@@ -198,10 +201,12 @@ contract RockPaperScissors {
      * @param _gameId ID of the game
      * @param _commitHash Hashed move with salt
      */
-    function commitMove(uint256 _gameId, bytes32 _commitHash) external { //@<
+    // @? - what happen if _commitHash is bytes32(0) because this is not checked
+    function commitMove(uint256 _gameId, bytes32 _commitHash) external {
         Game storage game = games[_gameId];
 
         require(msg.sender == game.playerA || msg.sender == game.playerB, "Not a player in this game");
+        // @? - but if have a playerA, why ask for GameState.Created
         require(game.state == GameState.Created || game.state == GameState.Committed, "Game not in commit phase");
 
         if (game.currentTurn == 1 && game.commitA == bytes32(0) && game.commitB == bytes32(0)) {
@@ -226,6 +231,7 @@ contract RockPaperScissors {
 
         // If both players have committed, set the reveal deadline
         if (game.commitA != bytes32(0) && game.commitB != bytes32(0)) {
+            // @? - missing event emit
             game.revealDeadline = block.timestamp + game.timeoutInterval;
         }
     }
@@ -236,11 +242,16 @@ contract RockPaperScissors {
      * @param _move Player's move (1=Rock, 2=Paper, 3=Scissors)
      * @param _salt Random salt used in the commit phase
      */
+    // @? - _gameId is front-runneable
+    // @? - what happen if only a player have commit
+    // @? - what happen if a the other player not commit yet and this see the move on txn
     function revealMove(uint256 _gameId, uint8 _move, bytes32 _salt) external {
+        //@<
         Game storage game = games[_gameId];
 
         require(msg.sender == game.playerA || msg.sender == game.playerB, "Not a player in this game");
         require(game.state == GameState.Committed, "Game not in reveal phase");
+        // @? if this revert the game will be stuck (DoS)
         require(block.timestamp <= game.revealDeadline, "Reveal phase timed out");
         require(_move >= 1 && _move <= 3, "Invalid move");
 

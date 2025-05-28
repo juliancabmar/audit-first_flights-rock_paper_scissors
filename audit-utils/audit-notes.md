@@ -75,35 +75,100 @@ b = 2t - 1
 
 # Auxiliary Notes
 
-1. first read
+1. first doc read
     take notes about unknows
 2. answer unknows
-3. second read
+3. second doc read
     take notes about unknows
 .
 .   (if some question depends of the code answer before the manual analisis)
 .
-4. get processes and actors
-    deploy contracts (contract owner)
-    game flow (user A, user B)
+
+
+4. search restrictions
+5. search invariants
+6. automated analisis
+7. get stats
+8. manual analisis A-B
+9. Get macro processes with actors
+deploy contracts (contract owner)
+    game flow (users)
     updating time outs params (admin)
     withdraw accumulated fees (admin)
     set new admin (contract owner)
-5. search restrictions
-6. search invariants
-7. automated analisis
-8. get stats
-9. manual analisis A-B
-10. manual analisis processes
-    deploy contracts (contract owner)
-        RockPaperScissors::constructor
-        WinningToken::constructor
-    set new admin (contract owner)
-        RockPaperScissors::setAdmin
-    withdraw accumulated fees (admin)
-        RockPaperScissors::withdrawFees
-    updating time outs params (admin)
-        RockPaperScissors::setJoinTimeout
+10. Explodes macro
+deploy contracts:
+    deploy RockPaperScissors [A: contract owner / T: RockPaperScissors::constructor]
+    deploy WinningToken [A: contract owner / T: WinnigToken::constructor]
+
+game flow:
+    participate
+        play
+            reward winner
+
+participate:
+    An user create a game betting ETH [A: user(X) / T: createGameWithEth]
+    An user create a game betting WinnerTokens [A: user(X) / T: createGameWithToken]
+        Another user join the game with ETH [A: user(!X) / T: joinGameWithEth]
+        Another user join the game with Token [A: user(!X) / T: joinGameWithToken]
+
+play:
+    LOOP (until some get the majority of N) {
+        commit moves
+            reveal moves
+                }END LOOP
+
+commit moves:
+    first commit move [A: user in game / T: commitMove]
+        second commit move [A: the other user in game / T: commitMove]
+
+reveal moves:
+    first reveal move [A: user in game / T: revealMove]
+        second reveal move [A: the other user in game / T: revealMove]
+                    
+reward winner:
+    send to the winner prize and winner tokens [A: user in game / T: revealMove]
+
+11. Get the protocol map (micro processes with actors and triggers)
+[deploy contracts]
+deploy RockPaperScissors [A: contract owner / T: RockPaperScissors::constructor]
+deploy WinningToken [A: contract owner / T: WinnigToken::constructor]
+
+    set new admin [A: contract owner / T: RockPaperScissors::setAdmin]
     
+    withdraw accumulated fees [A: admin / T: RockPaperScissors::withdrawFees]
+    
+    updating time outs params [A: admin / T: RockPaperScissors::setJoinTimeout]
+    
+    set the join timeout period [A: admin / T: RockPaperScissors::setJoinTimeout]
+
+    on receive ETH [A: all / T: RockPaperScissors::receive]
+
+    [game flow]
+    An user create a game betting ETH [A: user(X) / T: RockPaperScissors::createGameWithEth]
+    An user create a game betting WinnerTokens [A: user(X) / T: RockPaperScissors::createGameWithToken]
+        Another user join the game with ETH [A: user(!X) / T: RockPaperScissors::joinGameWithEth]
+        Another user join the game with Token [A: user(!X) / T: RockPaperScissors::joinGameWithToken]
+            LOOP (until some get the majority of N) {
+                first commit move [A: user in game / T: RockPaperScissors::commitMove]
+                    second commit move [A: the other user in game / T: RockPaperScissors::commitMove]
+                        first reveal move [A: user in game / T: RockPaperScissors::revealMove]
+                            second reveal move [A: the other user in game / T: RockPaperScissors::revealMove]
+                                }END LOOP
+                                    send to the winner prize and winner tokens [A: user in game / T: RockPaperScissors::revealMove]
+
+                            claim win if opponent didn't reveal in time [A: first user revealed / T: RockPaperScissors::timeoutReveal]
+            
+        cancel game and refund if still in created state [A: user who create the game / T: RockPaperScissors::cancelGame]
+
+        cancel game if timeout of joined reach [A: all / T: RockPaperScissors::timeoutJoin]
+
+12. Add the other external/public functions to the map (not view and pure)
+13. Manual analisis
+14. Fuzzing
+15. Answering
+16. Analisis-Answer loop
+17. Reporting
+
 
     

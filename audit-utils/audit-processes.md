@@ -23,6 +23,12 @@
     Add findings to:
         LIST::Unknows
 
+## Get processes, triggers and actors
+    Do it for macro to micro taking in count parallel execution (but never reach the functions)
+    Add the trigger function to each one
+    Add the actors to each one
+
+
 ## Search restrictions
     Add to LIST::Restrictions
         scope
