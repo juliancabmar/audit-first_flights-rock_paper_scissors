@@ -246,7 +246,6 @@ contract RockPaperScissors {
     // @? - what happen if only a player have commit
     // @? - what happen if a the other player not commit yet and this see the move on txn
     function revealMove(uint256 _gameId, uint8 _move, bytes32 _salt) external {
-        //@<
         Game storage game = games[_gameId];
 
         require(msg.sender == game.playerA || msg.sender == game.playerB, "Not a player in this game");
@@ -280,6 +279,7 @@ contract RockPaperScissors {
      * @notice Claim win if opponent didn't reveal in time
      * @param _gameId ID of the game
      */
+    // @? - what happen if is called by a non revelated player
     function timeoutReveal(uint256 _gameId) external {
         Game storage game = games[_gameId];
 
@@ -301,6 +301,7 @@ contract RockPaperScissors {
             // Neither player revealed, cancel the game and refund
             _cancelGame(_gameId);
         } else {
+            // @? - on what situation this revert is reached (both revealed players)
             revert("Invalid timeout claim");
         }
     }
@@ -363,7 +364,7 @@ contract RockPaperScissors {
      * @notice Set the join timeout period (admin function)
      * @param _newTimeout New timeout value in seconds
      */
-    // @? - this may be callable only for the Admin
+    // @? - by the docs this may be callable only for the Admin
     function setJoinTimeout(uint256 _newTimeout) external {
         require(msg.sender == owner(), "Only owner can set timeout");
         require(_newTimeout >= 1 hours, "Timeout must be at least 1 hour");
@@ -445,6 +446,7 @@ contract RockPaperScissors {
         // Rock = 1, Paper = 2, Scissors = 3
         if (game.moveA == game.moveB) {
             // Tie, no points
+            // @? - repeated upwards
             turnWinner = address(0);
         } else if (
             (game.moveA == Move.Rock && game.moveB == Move.Scissors)
@@ -513,6 +515,7 @@ contract RockPaperScissors {
             emit FeeCollected(_gameId, fee);
 
             // Send prize to winner
+            // @? - evaluate reentrancy
             (bool success,) = _winner.call{value: prize}("");
             require(success, "Transfer failed");
         }
@@ -520,9 +523,11 @@ contract RockPaperScissors {
         // Handle token prizes - winner gets both tokens
         if (game.bet == 0) {
             // Mint a winning token
+            // @? - minting is ok, not to be transfer
             winningToken.mint(_winner, 2);
         } else {
             // Mint a winning token for ETH games too
+            // @? - this not generates inflation
             winningToken.mint(_winner, 1);
         }
 
@@ -537,8 +542,8 @@ contract RockPaperScissors {
         Game storage game = games[_gameId];
 
         game.state = GameState.Finished;
-
         // Return ETH bets to both players, minus protocol fee
+        // @? - truncate problems on ETH or token bets
         if (game.bet > 0) {
             // Calculate protocol fee (10% of total pot)
             uint256 totalPot = game.bet * 2;
@@ -550,12 +555,14 @@ contract RockPaperScissors {
             emit FeeCollected(_gameId, fee);
 
             // Refund both players
+            // @? - reentrancy
             (bool successA,) = game.playerA.call{value: refundPerPlayer}("");
             (bool successB,) = game.playerB.call{value: refundPerPlayer}("");
             require(successA && successB, "Transfer failed");
         }
 
         // Return tokens for token games
+        // @? - minting is right here, not will be transfer
         if (game.bet == 0) {
             winningToken.mint(game.playerA, 1);
             winningToken.mint(game.playerB, 1);
@@ -575,6 +582,7 @@ contract RockPaperScissors {
         game.state = GameState.Cancelled;
 
         // Refund ETH to players
+        // @? - reentrancy
         if (game.bet > 0) {
             (bool successA,) = game.playerA.call{value: game.bet}("");
             require(successA, "Transfer to player A failed");
@@ -586,6 +594,7 @@ contract RockPaperScissors {
         }
 
         // Return tokens for token games
+        // @? - mminting is ok
         if (game.bet == 0) {
             if (game.playerA != address(0)) {
                 winningToken.mint(game.playerA, 1);

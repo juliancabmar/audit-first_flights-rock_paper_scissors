@@ -127,7 +127,7 @@ reveal moves:
         second reveal move [A: the other user in game / T: revealMove]
                     
 reward winner:
-    send to the winner prize and winner tokens [A: user in game / T: revealMove]
+    send to the winner prize and/or winner tokens [A: user in game / T: revealMove]
 
 11. Get the protocol map (micro processes with actors and triggers)
 [deploy contracts]
@@ -155,17 +155,17 @@ deploy WinningToken [A: contract owner / T: WinnigToken::constructor]
                         first reveal move [A: user in game / T: RockPaperScissors::revealMove]
                             second reveal move [A: the other user in game / T: RockPaperScissors::revealMove]
                                 }END LOOP
-                                    send to the winner prize and winner tokens [A: user in game / T: RockPaperScissors::revealMove]
+                                    send to the winner prize and/or winner tokens [A: user in game / T: RockPaperScissors::revealMove]
 
-                            claim win if opponent didn't reveal in time [A: first user revealed / T: RockPaperScissors::timeoutReveal]
+                            claim win if opponent didn't reveal in time [A: user in game / T: RockPaperScissors::timeoutReveal]
             
-        cancel game and refund if still in created state [A: user who create the game / T: RockPaperScissors::cancelGame]
+                cancel game and refund if still in created state [A: user who create the game / T: RockPaperScissors::cancelGame]
 
         cancel game if timeout of joined reach [A: all / T: RockPaperScissors::timeoutJoin]
 
 12. Add the other external/public functions to the map (not view and pure)
 13. Manual analisis
-14. Fuzzing
+14. Fuzzing  <---------------I'M HERE
 15. Answering
 16. Analisis-Answer loop
 17. Reporting
