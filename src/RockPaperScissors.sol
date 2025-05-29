@@ -3,6 +3,8 @@ pragma solidity ^0.8.13;
 
 import "./WinningToken.sol";
 
+// @? - the games ends if a maojority is reached
+
 /**
  * @title Rock Paper Scissors Game
  * @notice A fair implementation of Rock Paper Scissors on Ethereum

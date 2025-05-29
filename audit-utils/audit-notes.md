@@ -42,9 +42,7 @@ None
 ### Confirmed Invariants
 
 ### Not Confirmed Invariants
-only ETH and token-based game
-10% protocol fee on all ETH games
-No fees on token-only games
++10% protocol fee on all ETH games
 Final winner receives prize and winner token
 Player can create a game for ETH or winner tokens
 Join timeout: 24 hours by default
@@ -169,6 +167,11 @@ deploy WinningToken [A: contract owner / T: WinnigToken::constructor]
 15. Answering
 16. Analisis-Answer loop
 17. Reporting
+
+
+property impact
+The balance of the protocol
+
 
 
     
