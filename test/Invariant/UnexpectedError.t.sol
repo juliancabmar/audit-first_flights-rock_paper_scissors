@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 
 import {Test} from "forge-std/Test.sol";
 import {StdInvariant} from "forge-std/StdInvariant.sol";
-import {Handler} from "./Handler.sol";
+import {Handler} from "./HandlerUnexpectedError.sol";
 import "src/RockPaperScissors.sol";
 import "src/WinningToken.sol";
 

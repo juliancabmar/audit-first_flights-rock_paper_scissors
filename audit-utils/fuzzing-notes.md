@@ -1,7 +1,7 @@
--------------------------------------------------------
 Conditions: states on that the entities will be available or not
 
 Entities:
+
 The process of <action>
 The process execution of <action>
 The function
@@ -90,3 +90,6 @@ The protocol never will revert with an unexpected error
 The contract balance never will be less than the previos run
 For every game the max current turn will be: <= (totalTurns + 1) / 2
 
+
+main doc: https://book.getfoundry.sh/forge/advanced-testing/invariant-testing
+Gooood article: https://medium.com/@regis-graptin/fuzz-testing-invariants-in-solidity-secure-smart-contracts-with-foundry-1fb319204d95
