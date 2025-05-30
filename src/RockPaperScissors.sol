@@ -138,7 +138,7 @@ contract RockPaperScissors {
         // @?S - ignore return value
         // @? - allow is not needed
         winningToken.transferFrom(msg.sender, address(this), 1);
-
+        // @? - if game counter allways goes up may be a limit of uint256.max games
         uint256 gameId = gameCounter++;
 
         Game storage game = games[gameId];
