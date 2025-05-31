@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 
 import "./WinningToken.sol";
 
-// @? - the games ends if a maojority is reached
+// @audit - the games ends if a unrecheable majority is reached
 
 /**
  * @title Rock Paper Scissors Game

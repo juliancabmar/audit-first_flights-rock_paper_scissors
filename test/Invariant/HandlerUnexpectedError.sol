@@ -21,7 +21,7 @@ contract Handler {
         token = WinningToken(game.winningToken());
     }
 
-    function createGameWithEth(uint256 _totalTurns, uint256 _timeoutInterval) external payable returns (uint256) {
+    function createGameWithEth(uint256 _totalTurns, uint256 _timeoutInterval) external payable {
         try game.createGameWithEth(_totalTurns, _timeoutInterval) {}
         catch (bytes memory message) {
             if (bytes4(message) == panicSel) {
@@ -31,7 +31,7 @@ contract Handler {
         }
     }
 
-    function createGameWithToken(uint256 _totalTurns, uint256 _timeoutInterval) external returns (uint256) {
+    function createGameWithToken(uint256 _totalTurns, uint256 _timeoutInterval) external {
         try game.createGameWithToken(_totalTurns, _timeoutInterval) {}
         catch (bytes memory message) {
             if (bytes4(message) == panicSel) {

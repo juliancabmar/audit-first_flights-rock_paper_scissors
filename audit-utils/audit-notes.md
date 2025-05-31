@@ -163,14 +163,10 @@ deploy WinningToken [A: contract owner / T: WinnigToken::constructor]
 
 12. Add the other external/public functions to the map (not view and pure)
 13. Manual analisis
-14. Fuzzing  <---------------I'M HERE
-15. Answering
+14. Fuzzing  
+15. Answering   <---------------I'M HERE
 16. Analisis-Answer loop
 17. Reporting
-
-
-property impact
-The balance of the protocol
 
 
 

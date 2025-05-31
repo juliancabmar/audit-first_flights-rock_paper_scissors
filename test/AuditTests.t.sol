@@ -23,6 +23,9 @@ contract AuditTests is Test {
     // Game ID for tests
     uint256 public gameId;
 
+    // Events
+    event GameFinished(uint256 indexed gameId, address winner, uint256 prize);
+
     // Setup before each test
     function setUp() public {
         // Set up addresses
@@ -149,32 +152,21 @@ contract AuditTests is Test {
         console.log("Protocol after: ", address(game).balance);
         console.log("Fee. ", fee);
     }
+    // !the games ends if a unrecheable majority is reached
 
-    function testFuzzBet(uint256 _bet) public {
-        // address owner = address(this);
+    function testGameNotFinishAfterMajority() public {
         bytes32 commitA;
         bytes32 commitB;
 
-        uint256 bet = bound(_bet, 0.01 ether, playerA.balance);
-        uint256 feePercent = game.PROTOCOL_FEE_PERCENT();
-
-        uint256 playerAInitBalance = playerA.balance;
-        uint256 playerBInitBalance = playerB.balance;
-        uint256 protocolInitBalance = address(game).balance;
-
-        console.log("Player A before: ", playerAInitBalance);
-        console.log("Player B before: ", playerBInitBalance);
-        console.log("Protocol before: ", protocolInitBalance);
-
         // PlayerA create a new game
         vm.prank(playerA);
-        gameId = game.createGameWithEth{value: bet}(3, 1 hours);
+        gameId = game.createGameWithEth{value: BET_AMOUNT}(3, 1 hours);
 
         vm.warp(block.timestamp + (30 minutes));
 
         // PlayerB is join
         vm.prank(playerB);
-        game.joinGameWithEth{value: bet}(gameId);
+        game.joinGameWithEth{value: BET_AMOUNT}(gameId);
 
         // Player A commits his #1 move
         commitA = keccak256(abi.encodePacked(RockPaperScissors.Move.Rock, bytes32("some salt")));
@@ -202,7 +194,7 @@ contract AuditTests is Test {
         game.commitMove(gameId, commitA);
 
         // Player B commits his #2 move
-        commitB = keccak256(abi.encodePacked(RockPaperScissors.Move.Scissors, bytes32("some salt")));
+        commitB = keccak256(abi.encodePacked(RockPaperScissors.Move.Rock, bytes32("some salt")));
         vm.prank(playerB);
         game.commitMove(gameId, commitB);
 
@@ -211,46 +203,47 @@ contract AuditTests is Test {
         game.revealMove(gameId, uint8(RockPaperScissors.Move.Paper), "some salt");
 
         // Player B reveal his #2 move
+        vm.expectEmit(false, false, false, false);
+        emit GameFinished(0, address(0), 0);
         vm.prank(playerB);
-        game.revealMove(gameId, uint8(RockPaperScissors.Move.Scissors), "some salt");
+        game.revealMove(gameId, uint8(RockPaperScissors.Move.Rock), "some salt");
+        // Player A Wins #2 turn and the game
+    }
 
-        // Player B Wins #2 turn
+    function testIfTotalTurnsIsOne() public {
+        bytes32 commitA;
+        bytes32 commitB;
 
-        // Player A commits his #3 move
+        // PlayerA create a new game
+        vm.prank(playerA);
+        gameId = game.createGameWithEth{value: BET_AMOUNT}(1, 1 hours);
+
+        vm.warp(block.timestamp + (30 minutes));
+
+        // PlayerB is join
+        vm.prank(playerB);
+        game.joinGameWithEth{value: BET_AMOUNT}(gameId);
+
+        // Player A commits his #1 move
         commitA = keccak256(abi.encodePacked(RockPaperScissors.Move.Rock, bytes32("some salt")));
         vm.prank(playerA);
         game.commitMove(gameId, commitA);
 
-        // Player B commits his #3 move
+        // Player B commits his #1 move
         commitB = keccak256(abi.encodePacked(RockPaperScissors.Move.Scissors, bytes32("some salt")));
         vm.prank(playerB);
         game.commitMove(gameId, commitB);
 
-        // Player A reveal his #3 move
+        // Player A reveal his #1 move
         vm.prank(playerA);
         game.revealMove(gameId, uint8(RockPaperScissors.Move.Rock), "some salt");
 
-        // Player B reveal his #3 move
+        // Player B reveal his #1 move
+        vm.expectEmit(false, false, false, false);
+        emit GameFinished(0, address(0), 0);
         vm.prank(playerB);
         game.revealMove(gameId, uint8(RockPaperScissors.Move.Scissors), "some salt");
 
-        // Player A Wins #3 turn and the game
-
-        // Total Prize and fee calculation
-        uint256 totalPrize = 2 * bet;
-        uint256 fee = (totalPrize * feePercent) / 100;
-
-        uint256 playerAExpectedBalance = playerAInitBalance - bet + (totalPrize - fee);
-        uint256 playerBExpectedBalance = playerBInitBalance - bet;
-        uint256 protocolExpectedBalance = protocolInitBalance + fee;
-
-        assertEq(playerAExpectedBalance, playerA.balance);
-        assertEq(playerBExpectedBalance, playerB.balance);
-        assertEq(protocolExpectedBalance, address(game).balance);
-
-        console.log("Player A after: ", playerA.balance);
-        console.log("Player B after: ", playerB.balance);
-        console.log("Protocol after: ", address(game).balance);
-        console.log("Fee. ", fee);
+        // Player A Wins #1 turn
     }
 }
