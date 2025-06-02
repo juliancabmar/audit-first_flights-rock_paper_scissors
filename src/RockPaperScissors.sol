@@ -154,7 +154,6 @@ contract RockPaperScissors {
      * @notice Join an existing game with ETH bet
      * @param _gameId ID of the game to join
      */
-    // @? - reentrancy here with other game prize
 
     // @audit-info - not zero address check
     function joinGameWithEth(uint256 _gameId) external payable {
@@ -184,8 +183,7 @@ contract RockPaperScissors {
         require(winningToken.balanceOf(msg.sender) >= 1, "Must have winning token");
 
         // Transfer token to contract
-        // @?S - ignore return value
-        // @? - not allow first
+        // @audit-info - ignore return value
         winningToken.transferFrom(msg.sender, address(this), 1);
 
         game.playerB = msg.sender;
