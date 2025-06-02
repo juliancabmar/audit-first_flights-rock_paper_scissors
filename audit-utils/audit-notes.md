@@ -169,5 +169,214 @@ deploy WinningToken [A: contract owner / T: WinnigToken::constructor]
 17. Reporting
 
 
+```solidity
+function testBaseWithEth() public {
+    address owner = address(this);
+    bytes32 commitA;
+    bytes32 commitB;
 
+    uint256 bet = BET_AMOUNT;
+    uint256 feePercent = game.PROTOCOL_FEE_PERCENT();
+
+    uint256 playerAInitBalance = playerA.balance;
+    uint256 playerBInitBalance = playerB.balance;
+    uint256 protocolInitBalance = address(game).balance;
+
+    console.log("Player A before: ", playerAInitBalance);
+    console.log("Player B before: ", playerBInitBalance);
+    console.log("Protocol before: ", protocolInitBalance);
+
+    // PlayerA create a new game
+    vm.prank(playerA);
+    gameId = game.createGameWithEth{value: BET_AMOUNT}(3, 1 hours);
+
+    vm.warp(block.timestamp + (30 minutes));
+
+    // PlayerB is join
+    vm.prank(playerB);
+    game.joinGameWithEth{value: BET_AMOUNT}(gameId);
+
+    // Player A commits his #1 move
+    commitA = keccak256(abi.encodePacked(RockPaperScissors.Move.Rock, bytes32("some salt")));
+    vm.prank(playerA);
+    game.commitMove(gameId, commitA);
+
+    // Player B commits his #1 move
+    commitB = keccak256(abi.encodePacked(RockPaperScissors.Move.Scissors, bytes32("some salt")));
+    vm.prank(playerB);
+    game.commitMove(gameId, commitB);
+
+    // Player A reveal his #1 move
+    vm.prank(playerA);
+    game.revealMove(gameId, uint8(RockPaperScissors.Move.Rock), "some salt");
+
+    // Player B reveal his #1 move
+    vm.prank(playerB);
+    game.revealMove(gameId, uint8(RockPaperScissors.Move.Scissors), "some salt");
+
+    // Player A Wins #1 turn
+
+    // Player A commits his #2 move
+    commitA = keccak256(abi.encodePacked(RockPaperScissors.Move.Paper, bytes32("some salt")));
+    vm.prank(playerA);
+    game.commitMove(gameId, commitA);
+
+    // Player B commits his #2 move
+    commitB = keccak256(abi.encodePacked(RockPaperScissors.Move.Scissors, bytes32("some salt")));
+    vm.prank(playerB);
+    game.commitMove(gameId, commitB);
+
+    // Player A reveal his #2 move
+    vm.prank(playerA);
+    game.revealMove(gameId, uint8(RockPaperScissors.Move.Paper), "some salt");
+
+    // Player B reveal his #2 move
+    vm.prank(playerB);
+    game.revealMove(gameId, uint8(RockPaperScissors.Move.Scissors), "some salt");
+
+    // Player B Wins #2 turn
+
+    // Player A commits his #3 move
+    commitA = keccak256(abi.encodePacked(RockPaperScissors.Move.Rock, bytes32("some salt")));
+    vm.prank(playerA);
+    game.commitMove(gameId, commitA);
+
+    // Player B commits his #3 move
+    commitB = keccak256(abi.encodePacked(RockPaperScissors.Move.Scissors, bytes32("some salt")));
+    vm.prank(playerB);
+    game.commitMove(gameId, commitB);
+
+    // Player A reveal his #3 move
+    vm.prank(playerA);
+    game.revealMove(gameId, uint8(RockPaperScissors.Move.Rock), "some salt");
+
+    // Player B reveal his #3 move
+    vm.prank(playerB);
+    game.revealMove(gameId, uint8(RockPaperScissors.Move.Scissors), "some salt");
+
+    // Player A Wins #3 turn and the game
+
+    // Total Prize and fee calculation
+    uint256 totalPrize = 2 * bet;
+    uint256 fee = (totalPrize * feePercent) / 100;
+
+    uint256 playerAExpectedBalance = playerAInitBalance - bet + (totalPrize - fee);
+    uint256 playerBExpectedBalance = playerBInitBalance - bet;
+    uint256 protocolExpectedBalance = protocolInitBalance + fee;
+
+    assertEq(playerAExpectedBalance, playerA.balance);
+    assertEq(playerBExpectedBalance, playerB.balance);
+    assertEq(protocolExpectedBalance, address(game).balance);
+
+    console.log("Player A after: ", playerA.balance);
+    console.log("Player B after: ", playerB.balance);
+    console.log("Protocol after: ", address(game).balance);
+    console.log("Fee. ", fee);
+}
+```
+
+```solidity
+function testBaseWithToken() public {
+    address owner = address(this);
+    bytes32 commitA;
+    bytes32 commitB;
+
+    uint256 bet = BET_AMOUNT;
+    uint256 feePercent = game.PROTOCOL_FEE_PERCENT();
+
+    uint256 playerAInitBalance = token.balanceOf(playerA);
+    uint256 playerBInitBalance = token.balanceOf(playerB);
+    uint256 protocolInitBalance = token.balanceOf(address(game));
+
+    console.log("Player A before: ", playerAInitBalance);
+    console.log("Player B before: ", playerBInitBalance);
+    console.log("Protocol before: ", protocolInitBalance);
+
+    // PlayerA create a new game
+    vm.startPrank(playerA);
+    token.approve(address(game), 1);
+    gameId = game.createGameWithToken(3, 1 hours);
+    vm.stopPrank();
+
+    vm.warp(block.timestamp + (30 minutes));
+
+    // PlayerB is join
+    vm.startPrank(playerB);
+    token.approve(address(game), 1);
+    game.joinGameWithToken(gameId);
+    vm.stopPrank();
+
+    // Player A commits his #1 move
+    commitA = keccak256(abi.encodePacked(RockPaperScissors.Move.Rock, bytes32("some salt")));
+    vm.prank(playerA);
+    game.commitMove(gameId, commitA);
+
+    // Player B commits his #1 move
+    commitB = keccak256(abi.encodePacked(RockPaperScissors.Move.Scissors, bytes32("some salt")));
+    vm.prank(playerB);
+    game.commitMove(gameId, commitB);
+
+    // Player A reveal his #1 move
+    vm.prank(playerA);
+    game.revealMove(gameId, uint8(RockPaperScissors.Move.Rock), "some salt");
+
+    // Player B reveal his #1 move
+    vm.prank(playerB);
+    game.revealMove(gameId, uint8(RockPaperScissors.Move.Scissors), "some salt");
+
+    // Player A Wins #1 turn
+
+    // Player A commits his #2 move
+    commitA = keccak256(abi.encodePacked(RockPaperScissors.Move.Paper, bytes32("some salt")));
+    vm.prank(playerA);
+    game.commitMove(gameId, commitA);
+
+    // Player B commits his #2 move
+    commitB = keccak256(abi.encodePacked(RockPaperScissors.Move.Scissors, bytes32("some salt")));
+    vm.prank(playerB);
+    game.commitMove(gameId, commitB);
+
+    // Player A reveal his #2 move
+    vm.prank(playerA);
+    game.revealMove(gameId, uint8(RockPaperScissors.Move.Paper), "some salt");
+
+    // Player B reveal his #2 move
+    vm.prank(playerB);
+    game.revealMove(gameId, uint8(RockPaperScissors.Move.Scissors), "some salt");
+
+    // Player B Wins #2 turn
+
+    // Player A commits his #3 move
+    commitA = keccak256(abi.encodePacked(RockPaperScissors.Move.Rock, bytes32("some salt")));
+    vm.prank(playerA);
+    game.commitMove(gameId, commitA);
+
+    // Player B commits his #3 move
+    commitB = keccak256(abi.encodePacked(RockPaperScissors.Move.Scissors, bytes32("some salt")));
+    vm.prank(playerB);
+    game.commitMove(gameId, commitB);
+
+    // Player A reveal his #3 move
+    vm.prank(playerA);
+    game.revealMove(gameId, uint8(RockPaperScissors.Move.Rock), "some salt");
+
+    // Player B reveal his #3 move
+    vm.prank(playerB);
+    game.revealMove(gameId, uint8(RockPaperScissors.Move.Scissors), "some salt");
+
+    // Player A Wins #3 turn and the game
+
+    uint256 playerAExpectedBalance = playerAInitBalance + 1;
+    uint256 playerBExpectedBalance = playerBInitBalance - 1;
+    uint256 protocolExpectedBalance = protocolInitBalance + 2;
+
+    assertEq(playerAExpectedBalance, token.balanceOf(playerA));
+    assertEq(playerBExpectedBalance, token.balanceOf(playerB));
+    assertEq(protocolExpectedBalance, token.balanceOf(address(game)));
+
+    console.log("Player A after: ", token.balanceOf(playerA));
+    console.log("Player B after: ", token.balanceOf(playerB));
+    console.log("Protocol after: ", token.balanceOf(address(game)));
+}
+```
     

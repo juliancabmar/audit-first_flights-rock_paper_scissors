@@ -95,13 +95,12 @@ contract RockPaperScissors {
      * @param _totalTurns Number of turns for the game (must be odd)
      * @param _timeoutInterval Seconds allowed for reveal phase
      */
+    // @audit-info - not zero address check
     function createGameWithEth(uint256 _totalTurns, uint256 _timeoutInterval) external payable returns (uint256) {
         require(msg.value >= minBet, "Bet amount too small");
-        // @? - what happen if total-turns is 1
         require(_totalTurns > 0, "Must have at least one turn");
         require(_totalTurns % 2 == 1, "Total turns must be odd");
-        // @?A - change literal by constant
-        // @? what happen if the reveal _timeoutInterval is >= joinTimeout
+        // @audit-gas - change literal by constant
         require(_timeoutInterval >= 5 minutes, "Timeout must be at least 5 minutes");
 
         uint256 gameId = gameCounter++;
@@ -117,7 +116,6 @@ contract RockPaperScissors {
         game.state = GameState.Created;
 
         emit GameCreated(gameId, msg.sender, msg.value, _totalTurns);
-        // @? somoebody can cancel the game only with the gameId
         return gameId;
     }
 
@@ -126,8 +124,7 @@ contract RockPaperScissors {
      * @param _totalTurns Number of turns for the game (must be odd)
      * @param _timeoutInterval Seconds allowed for reveal phase
      */
-    // @? - How difference the Eth and Token games based
-    // @? - this can be called by a msg.sender address = 0x0
+    // @audit-info - not zero address check
     function createGameWithToken(uint256 _totalTurns, uint256 _timeoutInterval) external returns (uint256) {
         require(winningToken.balanceOf(msg.sender) >= 1, "Must have winning token");
         require(_totalTurns > 0, "Must have at least one turn");
@@ -135,10 +132,7 @@ contract RockPaperScissors {
         require(_timeoutInterval >= 5 minutes, "Timeout must be at least 5 minutes");
 
         // Transfer token to contract
-        // @?S - ignore return value
-        // @? - allow is not needed
         winningToken.transferFrom(msg.sender, address(this), 1);
-        // @? - if game counter allways goes up may be a limit of uint256.max games
         uint256 gameId = gameCounter++;
 
         Game storage game = games[gameId];
@@ -160,9 +154,9 @@ contract RockPaperScissors {
      * @notice Join an existing game with ETH bet
      * @param _gameId ID of the game to join
      */
-    // @? - what happen if pass a open token gameId here
-    // @? - this can be called by a msg.sender address = 0x0
     // @? - reentrancy here with other game prize
+
+    // @audit-info - not zero address check
     function joinGameWithEth(uint256 _gameId) external payable {
         Game storage game = games[_gameId];
 
@@ -179,7 +173,7 @@ contract RockPaperScissors {
      * @notice Join an existing game with token
      * @param _gameId ID of the game to join
      */
-    // @? - this can be called by a msg.sender address = 0x0
+    // @audit-info - not zero address check
     function joinGameWithToken(uint256 _gameId) external {
         Game storage game = games[_gameId];
 
