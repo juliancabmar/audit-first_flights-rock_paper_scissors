@@ -195,12 +195,12 @@ contract RockPaperScissors {
      * @param _gameId ID of the game
      * @param _commitHash Hashed move with salt
      */
-    // @? - what happen if _commitHash is bytes32(0) because this is not checked
+    // @audit-low - _commitHash bytes32(0) is not checked
     function commitMove(uint256 _gameId, bytes32 _commitHash) external {
         Game storage game = games[_gameId];
 
         require(msg.sender == game.playerA || msg.sender == game.playerB, "Not a player in this game");
-        // @? - but if have a playerA, why ask for GameState.Created
+        // @audit-gas - having a playerA the game state is already GameState.Created, so this is redundant
         require(game.state == GameState.Created || game.state == GameState.Committed, "Game not in commit phase");
 
         if (game.currentTurn == 1 && game.commitA == bytes32(0) && game.commitB == bytes32(0)) {
@@ -225,7 +225,7 @@ contract RockPaperScissors {
 
         // If both players have committed, set the reveal deadline
         if (game.commitA != bytes32(0) && game.commitB != bytes32(0)) {
-            // @? - missing event emit
+            // @audit-info - missing event emit
             game.revealDeadline = block.timestamp + game.timeoutInterval;
         }
     }
@@ -236,15 +236,12 @@ contract RockPaperScissors {
      * @param _move Player's move (1=Rock, 2=Paper, 3=Scissors)
      * @param _salt Random salt used in the commit phase
      */
-    // @? - _gameId is front-runneable
-    // @? - what happen if only a player have commit
-    // @? - what happen if a the other player not commit yet and this see the move on txn
+    // @audit-low - state can change to "Commited" without two commit
     function revealMove(uint256 _gameId, uint8 _move, bytes32 _salt) external {
         Game storage game = games[_gameId];
 
         require(msg.sender == game.playerA || msg.sender == game.playerB, "Not a player in this game");
         require(game.state == GameState.Committed, "Game not in reveal phase");
-        // @? if this revert the game will be stuck (DoS)
         require(block.timestamp <= game.revealDeadline, "Reveal phase timed out");
         require(_move >= 1 && _move <= 3, "Invalid move");
 
@@ -273,7 +270,6 @@ contract RockPaperScissors {
      * @notice Claim win if opponent didn't reveal in time
      * @param _gameId ID of the game
      */
-    // @? - what happen if is called by a non revelated player
     function timeoutReveal(uint256 _gameId) external {
         Game storage game = games[_gameId];
 
@@ -295,7 +291,6 @@ contract RockPaperScissors {
             // Neither player revealed, cancel the game and refund
             _cancelGame(_gameId);
         } else {
-            // @? - on what situation this revert is reached (both revealed players)
             revert("Invalid timeout claim");
         }
     }
@@ -358,7 +353,7 @@ contract RockPaperScissors {
      * @notice Set the join timeout period (admin function)
      * @param _newTimeout New timeout value in seconds
      */
-    // @? - by the docs this may be callable only for the Admin
+    // @audit-low - by the docs this may be callable only for the Admin
     function setJoinTimeout(uint256 _newTimeout) external {
         require(msg.sender == owner(), "Only owner can set timeout");
         require(_newTimeout >= 1 hours, "Timeout must be at least 1 hour");
@@ -393,7 +388,7 @@ contract RockPaperScissors {
      * @notice Get the owner of the token contract
      * @return The token owner address
      */
-    // @?A - make external
+    // @audit-info - make external
     function tokenOwner() public view returns (address) {
         return winningToken.owner();
     }
@@ -406,7 +401,7 @@ contract RockPaperScissors {
     function setAdmin(address _newAdmin) external {
         require(msg.sender == adminAddress, "Only admin can set new admin");
         require(_newAdmin != address(0), "Admin cannot be zero address");
-        // @?A - missing event for this
+        // @audit-info - missing event for this
         adminAddress = _newAdmin;
     }
 
@@ -440,7 +435,7 @@ contract RockPaperScissors {
         // Rock = 1, Paper = 2, Scissors = 3
         if (game.moveA == game.moveB) {
             // Tie, no points
-            // @? - repeated upwards
+            // @audit-low - duplicate asignation (upwards)
             turnWinner = address(0);
         } else if (
             (game.moveA == Move.Rock && game.moveB == Move.Scissors)
@@ -509,7 +504,6 @@ contract RockPaperScissors {
             emit FeeCollected(_gameId, fee);
 
             // Send prize to winner
-            // @? - evaluate reentrancy
             (bool success,) = _winner.call{value: prize}("");
             require(success, "Transfer failed");
         }
@@ -517,11 +511,10 @@ contract RockPaperScissors {
         // Handle token prizes - winner gets both tokens
         if (game.bet == 0) {
             // Mint a winning token
-            // @? - minting is ok, not to be transfer
             winningToken.mint(_winner, 2);
         } else {
             // Mint a winning token for ETH games too
-            // @? - this not generates inflation
+            // @audit-medium - this generates inflation
             winningToken.mint(_winner, 1);
         }
 
@@ -537,7 +530,6 @@ contract RockPaperScissors {
 
         game.state = GameState.Finished;
         // Return ETH bets to both players, minus protocol fee
-        // @? - truncate problems on ETH or token bets
         if (game.bet > 0) {
             // Calculate protocol fee (10% of total pot)
             uint256 totalPot = game.bet * 2;
@@ -549,14 +541,12 @@ contract RockPaperScissors {
             emit FeeCollected(_gameId, fee);
 
             // Refund both players
-            // @? - reentrancy
             (bool successA,) = game.playerA.call{value: refundPerPlayer}("");
             (bool successB,) = game.playerB.call{value: refundPerPlayer}("");
             require(successA && successB, "Transfer failed");
         }
 
         // Return tokens for token games
-        // @? - minting is right here, not will be transfer
         if (game.bet == 0) {
             winningToken.mint(game.playerA, 1);
             winningToken.mint(game.playerB, 1);
@@ -576,7 +566,6 @@ contract RockPaperScissors {
         game.state = GameState.Cancelled;
 
         // Refund ETH to players
-        // @? - reentrancy
         if (game.bet > 0) {
             (bool successA,) = game.playerA.call{value: game.bet}("");
             require(successA, "Transfer to player A failed");
@@ -588,7 +577,6 @@ contract RockPaperScissors {
         }
 
         // Return tokens for token games
-        // @? - mminting is ok
         if (game.bet == 0) {
             if (game.playerA != address(0)) {
                 winningToken.mint(game.playerA, 1);
